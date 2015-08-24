@@ -80,7 +80,5 @@ func capture(r interface{}) {
 	default:
 		err = fmt.Errorf("%v", r)
 	}
-	p := raven.NewPacket(err.Error(), raven.NewException(err, raven.NewStacktrace(2, 3, nil)))
-	_, ch := raven.Capture(p, map[string]string{"provider": providerName})
-	<-ch
+	raven.CaptureErrorAndWait(err, map[string]string{"provider": providerName})
 }
