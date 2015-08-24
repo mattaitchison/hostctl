@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/getsentry/raven-go"
 	"github.com/gliderlabs/hostctl/providers"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -69,4 +70,17 @@ func progressBar(unit string, interval time.Duration) func() {
 		finished <- true
 		fmt.Fprintln(os.Stderr)
 	}
+}
+
+func capture(r interface{}) {
+	var err error
+	switch r := r.(type) {
+	case error:
+		err = r
+	default:
+		err = fmt.Errorf("%v", r)
+	}
+	p := raven.NewPacket(err.Error(), raven.NewException(err, raven.NewStacktrace(2, 3, nil)))
+	_, ch := raven.Capture(p, map[string]string{"provider": providerName})
+	<-ch
 }

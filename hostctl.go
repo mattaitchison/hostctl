@@ -5,11 +5,13 @@ import (
 	"os"
 
 	"github.com/MattAitchison/env"
+	"github.com/getsentry/raven-go"
 	"github.com/spf13/cobra"
 )
 
 var (
-	Version string
+	Version   string
+	SentryDSN string
 
 	providerName = env.String("HOSTCTL_PROVIDER", "digitalocean", "cloud provider")
 	defaultName  = env.String("HOSTCTL_NAME", "", "optional default name")
@@ -25,10 +27,16 @@ var (
 )
 
 func init() {
-	Hostctl.AddCommand(versionCmd)
+	raven.SetDSN(SentryDSN)
 }
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			capture(r)
+			panic(r)
+		}
+	}()
 	fatal(Hostctl.Execute())
 }
 
